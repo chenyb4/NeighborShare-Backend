@@ -5,6 +5,8 @@ const mongoose=require('mongoose');
 
 
 app.use('/apartments',require('./routes/apartment'));
+app.use('/items',require('./routes/item'));
+app.use('/users',require('./routes/user'));
 
 
 mongoose.connect('mongodb://localhost:27017').then(r => console.log('db connected'))
