@@ -16,6 +16,10 @@ const UserSchema=mongoose.Schema({
     apartment:{
         type:String,
         required:false
+    },
+    secret:{
+        type:String,
+        required:false
     }
 });
 

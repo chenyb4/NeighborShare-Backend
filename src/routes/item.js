@@ -12,6 +12,22 @@ router.get('',async (req,res)=>{
     }
 });
 
+router.post('',async (req,res)=>{
+
+    const {name, ownerEmail, description} = req.body;
+
+
+    const newItem = new Item({
+        name: name,
+        ownerEmail: ownerEmail,
+        description: description,
+    });
+
+    newItem.save()
+        .then(item => res.json(item))
+        .catch(err => res.status(400).json({ error: err.message }));
+});
+
 
 
 
