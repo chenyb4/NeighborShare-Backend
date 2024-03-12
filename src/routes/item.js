@@ -33,13 +33,15 @@ router.get('/:itemId',(req, res) => {
 //post
 router.post('',async (req,res)=>{
 
-    const {name, ownerEmail, description} = req.body;
+    const {name, ownerEmail, description,apartmentNumber,isAvailable} = req.body;
 
 
     const newItem = new Item({
         name: name,
         ownerEmail: ownerEmail,
         description: description,
+        apartmentNumber:apartmentNumber,
+        isAvailable:isAvailable,
     });
 
     try{

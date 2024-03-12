@@ -12,6 +12,15 @@ const ItemSchema=mongoose.Schema({
     description:{
         type:String,
         required:false
+    },
+    apartmentNumber:{
+        type:String,
+        required:true
+    },
+    isAvailable:{
+        type:Boolean,
+        required:true,
+        default:true
     }
 });
 
