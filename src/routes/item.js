@@ -1,98 +1,28 @@
 const express=require('express');
 const router=express.Router();
 const Item=require('../models/Item');
+const itemController=require("../controllers/item")
 
 
 //get all
-router.get('',async (req,res)=>{
-    try{
-        const items=await Item.find();
-        res.json(items);
-    }catch (e){
-        res.status(400).json({ error: e.message });
-    }
-});
+router.get('',itemController.getAllItems);
 
 
 //get one by id
-router.get('/:itemId',(req, res) => {
-    const itemId = req.params.itemId;
-
-    // Find the item by its ID
-    Item.findById(itemId)
-        .then(item => {
-            if (!item) {
-                return res.status(404).json({ error: 'Item not found' });
-            }
-            res.json(item);
-        })
-        .catch(err => res.status(400).json({ error: err.message }));
-});
+router.get('/:itemId',itemController.getItemById);
 
 
 //post
-router.post('',async (req,res)=>{
-
-    const {name, ownerEmail, description,apartmentNumber,isAvailable} = req.body;
-
-
-    const newItem = new Item({
-        name: name,
-        ownerEmail: ownerEmail,
-        description: description,
-        apartmentNumber:apartmentNumber,
-        isAvailable:isAvailable,
-    });
-
-    try{
-        newItem.save()
-            .then(item => res.json(item))
-            .catch(err => res.status(400).json({ error: err.message }));
-    }catch (e) {
-        res.status(400).json({ error: e.message });
-    }
-
-});
+router.post('',itemController.addItem);
 
 
 
 //update
-router.put('/:itemId',async (req,res)=>{
-    const itemId = req.params.itemId;
-
-    try{
-        Item.findByIdAndUpdate(itemId, req.body, { new: true })
-            .then(updatedItem => {
-                if (!updatedItem) {
-                    return res.status(404).json({ error: 'Item not found' });
-                }
-                res.json(updatedItem);
-            })
-            .catch(err => res.status(400).json({ error: err.message }));
-    }catch (e) {
-        res.status(400).json({ error: e.message });
-    }
-});
+router.put('/:itemId',itemController.editItem);
 
 
 //delete
-router.delete('/:itemId', (req, res) => {
-    const itemId = req.params.itemId;
-
-    try{
-        Item.findOneAndDelete(itemId)
-            .then(item => {
-                if (!item) {
-                    return res.status(404).json({ error: 'Item not found' });
-                }
-                res.json({ message: 'Item removed successfully' , item});
-            })
-            .catch(err => res.status(400).json({ error: err.message }));
-    }catch (e) {
-        res.status(400).json({ error: e.message });
-    }
-
-});
+router.delete('/:itemId', itemController.deleteItem);
 
 
 
