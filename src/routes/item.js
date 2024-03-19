@@ -85,7 +85,7 @@ router.delete('/:itemId', (req, res) => {
                 if (!item) {
                     return res.status(404).json({ error: 'Item not found' });
                 }
-                res.json({ message: 'Item removed successfully' });
+                res.json({ message: 'Item removed successfully' , item});
             })
             .catch(err => res.status(400).json({ error: err.message }));
     }catch (e) {
