@@ -4,27 +4,33 @@ const { verify } = require("jsonwebtoken");
 const jwt = require('jsonwebtoken');
 const User = require("../models/User");
 
-let users=await User.find();
 
 
-const isLoggedIn = (req,res,next) => {
+
+const isLoggedIn = (req, res, next) => {
     console.log('Authenticating...');
-    if(checkHeaderFormat(req)){
+    if (checkHeaderFormat(req)) {
         const token = getTokenFromRequest(req);
 
-        //console.log("token before if", token);
-        if(token){
-            const payload = verifyToken(token);
-            if(payload){
-                req.user = payload;
-                return next();
-            }
+        if (token) {
+            verifyToken(token)
+                .then(payload => {
+                    if (payload) {
+                        req.user = payload;
+                        return next();
+                    } else {
+                        res.status(StatusCodes.UNAUTHORIZED).send('Something wrong with your credentials.');
+                    }
+                })
+                .catch(error => {
+                    res.status(StatusCodes.INTERNAL_SERVER_ERROR).send('Internal Server Error');
+                });
+        } else {
+            res.status(StatusCodes.UNAUTHORIZED).send('No token provided.');
         }
-        res.status(StatusCodes.UNAUTHORIZED).send('Something wrong with your credentials.');
-    }else{
+    } else {
         res.status(StatusCodes.BAD_REQUEST).send('The format of the authorization header is incorrect. Correct format should be "Bearer⌴token".')
     }
-
 };
 
 
@@ -51,15 +57,16 @@ const getTokenFromRequest = (req) => {
     return false;
 };
 
-const verifyToken = (token) => {
-    try{
-        const tokenPayload=jwt.decode(token);
-        console.log('Token payload',tokenPayload);
-        if(tokenPayload){
-            const user=users.find(user=>user.email===tokenPayload.email);
-            return jwt.verify(token,user.secret);
+const verifyToken = async (token) => {
+    try {
+        let users = await User.find();
+        const tokenPayload = jwt.decode(token);
+        console.log('Token payload', tokenPayload);
+        if (tokenPayload) {
+            const user = users.find(user => user.email === tokenPayload.email);
+            return jwt.verify(token, user.secret);
         }
-    }catch (e){
+    } catch (e) {
         return false;
     }
 };
