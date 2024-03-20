@@ -1,6 +1,6 @@
 const express=require('express');
 const router=express.Router();
-const Apartment=require('../models/Apartment');
+const Apartment=require('../database/models/Apartment');
 
 const apartmentController=require("../controllers/apartment")
 

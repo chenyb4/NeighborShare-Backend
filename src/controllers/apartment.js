@@ -1,4 +1,4 @@
-const Apartment = require("../models/Apartment");
+const Apartment = require("../database/models/Apartment");
 
 
 exports.getAllApartments=async (req, res) => {

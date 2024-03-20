@@ -2,7 +2,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const {StatusCodes} = require("http-status-codes");
-const User = require("../models/User");
+const User = require("../database/models/User");
 
 
 
