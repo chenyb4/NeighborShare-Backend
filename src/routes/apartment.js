@@ -1,6 +1,7 @@
 const express=require('express');
 const router=express.Router();
 const Apartment=require('../database/models/Apartment');
+const isLoggedIn = require('../middleware/is-logged-in');
 
 const apartmentController=require("../controllers/apartment")
 

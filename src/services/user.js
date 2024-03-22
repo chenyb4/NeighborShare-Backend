@@ -43,7 +43,7 @@ exports.addUser=async (req,res)=>{
 
     try{
         newUser.save()
-            .then(user => res.json(user))
+            .then(user => res.status(201).json(user))
             .catch(err => res.status(400).json({ error: err.message }));
     }catch (e) {
         res.status(400).json({ error: e.message });
