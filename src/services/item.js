@@ -67,8 +67,10 @@ exports.editItem=async (req,res)=>{
 exports.deleteItem=async (req,res)=>{
     const itemId = req.params.itemId;
 
+    console.log("itemid"+itemId)
+
     try{
-        Item.findOneAndDelete(itemId)
+        Item.findOneAndDelete({ _id: itemId })
             .then(item => {
                 if (!item) {
                     return res.status(404).json({ error: 'Item not found' });

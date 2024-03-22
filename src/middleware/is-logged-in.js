@@ -8,7 +8,7 @@ const User = require("../database/models/User");
 
 
 const isLoggedIn = (req, res, next) => {
-    console.log('Authenticating...');
+
     if (checkHeaderFormat(req)) {
         const token = getTokenFromRequest(req);
 
@@ -61,7 +61,6 @@ const verifyToken = async (token) => {
     try {
         let users = await User.find();
         const tokenPayload = jwt.decode(token);
-        console.log('Token payload', tokenPayload);
         if (tokenPayload) {
             const user = users.find(user => user.email === tokenPayload.email);
             return jwt.verify(token, user.secret);

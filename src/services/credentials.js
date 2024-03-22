@@ -32,8 +32,6 @@ exports.auth=(req, res) => {
     const email = req.body.email;
     const password = req.body.password;
 
-    console.log("auth funtion called")
-
     if(email && password) {
 
         logIn(email, password)
