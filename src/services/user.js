@@ -3,14 +3,22 @@ const bcrypt = require("bcrypt");
 const {v4: uuidv4} = require("uuid");
 
 
-exports.getAllUsers=async (req,res)=>{
-    try{
-        const users=await User.find();
+exports.getAllUsers = async (req, res) => {
+    try {
+        let query = {};
+
+        // Check if email query parameter is provided
+        if (req.query.email) {
+            query.email = req.query.email;
+        }
+
+        const users = await User.find(query);
         res.json(users);
-    }catch (err){
-        res.json({message:err});
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
-}
+};
+
 
 exports.getUserById=async (req,res)=>{
     const userId = req.params.userId;
