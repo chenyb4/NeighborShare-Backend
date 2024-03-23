@@ -3,15 +3,40 @@ const {getTokenFromRequest} = require("./utils/helperFunctions");
 const jwt = require('jsonwebtoken');
 const User = require("../database/models/User");
 
+//get all the items in my apartment, not really all the items
+exports.getAllItems = async (req, res) => {
+    try {
+        const token = getTokenFromRequest(req);
+        const tokenPayload = jwt.decode(token);
 
-exports.getAllItems=async (req,res)=>{
-    try{
-        const items=await Item.find();
+        if (!tokenPayload || !tokenPayload.email) {
+            return res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid token payload." });
+        }
+
+        // Retrieve user by email from token payload
+        const user = await User.findOne({ email: tokenPayload.email });
+
+        if (!user) {
+            return res.status(StatusCodes.NOT_FOUND).json({ error: "User not found." });
+        }
+
+        // Get apartment_id from the user object
+        const apartmentId = user.apartment_id;
+
+        // Find all users with the same apartment_id
+        const usersWithSameApartment = await User.find({ apartment_id: apartmentId });
+
+        // Extract emails of users with the same apartment_id
+        const emails = usersWithSameApartment.map(user => user.email);
+
+        // Find items owned by users with the same apartment_id
+        const items = await Item.find({ ownerEmail: { $in: emails } });
+
         res.json(items);
-    }catch (e){
-        res.status(400).json({ error: e.message });
+    } catch (error) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: error.message });
     }
-}
+};
 
 exports.getItemById=async (req,res)=>{
     const itemId = req.params.itemId;
