@@ -15,7 +15,7 @@ router.get('/:itemId',itemController.getItemById);
 
 
 //post
-router.post('',itemController.addItem);
+router.post('',isLoggedIn,itemController.addItem);
 
 
 

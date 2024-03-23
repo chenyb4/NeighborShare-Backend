@@ -1,4 +1,7 @@
 const Item = require("../database/models/Item");
+const {getTokenFromRequest} = require("./utils/helperFunctions");
+const jwt = require('jsonwebtoken');
+const User = require("../database/models/User");
 
 
 exports.getAllItems=async (req,res)=>{
@@ -24,26 +27,58 @@ exports.getItemById=async (req,res)=>{
         .catch(err => res.status(400).json({ error: err.message }));
 }
 
-exports.addItem=async (req,res)=>{
-    const {name, ownerEmail, description,apartmentNumber,isAvailable} = req.body;
+exports.addItem = async (req, res) => {
+    try {
+        // Extract token from request
+        const token = getTokenFromRequest(req);
 
+        const tokenPayload = jwt.decode(token);
 
-    const newItem = new Item({
-        name: name,
-        ownerEmail: ownerEmail,
-        description: description,
-        apartmentNumber:apartmentNumber,
-        isAvailable:isAvailable,
-    });
+        console.log(tokenPayload);
+        console.log(tokenPayload.apartment_id);
 
-    try{
-        newItem.save()
-            .then(item => res.json(item))
-            .catch(err => res.status(400).json({ error: err.message }));
-    }catch (e) {
-        res.status(400).json({ error: e.message });
+        if (!tokenPayload || !tokenPayload.email) {
+            return res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid token payload." });
+        }
+
+        // Retrieve user by email from token payload
+        const user = await User.findOne({ email: tokenPayload.email });
+
+        if (!user) {
+            return res.status(StatusCodes.NOT_FOUND).json({ error: "User not found." });
+        }
+
+        // Check if user has an apartment_id
+        if (!user.apartment_id) {
+            return res.status(403).json({ error: "Forbidden: User does not have an apartment." });
+        }
+
+        // Retrieve ownerEmail from token payload
+        const ownerEmail = tokenPayload.email;
+
+        // Check if all required fields are provided
+        const { name, description, apartmentNumber, isAvailable } = req.body;
+        if (!name || !description || !apartmentNumber || !isAvailable) {
+            return res.status(400).json({ error: "All fields are required. name, description, apartmentNumber, isAvailable" });
+        }
+
+        // Create new item
+        const newItem = new Item({
+            name,
+            ownerEmail,
+            description,
+            apartmentNumber,
+            isAvailable
+        });
+
+        // Save item to database
+        const savedItem = await newItem.save();
+
+        res.json(savedItem);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-}
+};
 
 
 exports.editItem=async (req,res)=>{
