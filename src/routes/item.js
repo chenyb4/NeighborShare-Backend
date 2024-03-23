@@ -20,11 +20,11 @@ router.post('',isLoggedIn,itemController.addItem);
 
 
 //update
-router.put('/:itemId',itemController.editItem);
+router.put('/:itemId',isLoggedIn,itemController.editItem);
 
 
 //delete
-router.delete('/:itemId', itemController.deleteItem);
+router.delete('/:itemId', isLoggedIn,itemController.deleteItem);
 
 
 

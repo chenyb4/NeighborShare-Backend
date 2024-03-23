@@ -105,40 +105,76 @@ exports.addItem = async (req, res) => {
     }
 };
 
-
-exports.editItem=async (req,res)=>{
+//user can only edit their own items
+//by verifying the email in token payload whether it
+//equals the ownerEmail of an item
+exports.editItem = async (req, res) => {
     const itemId = req.params.itemId;
+    const token = getTokenFromRequest(req);
+    const tokenPayload = jwt.decode(token);
 
-    try{
-        Item.findByIdAndUpdate(itemId, req.body, { new: true })
-            .then(updatedItem => {
-                if (!updatedItem) {
-                    return res.status(404).json({ error: 'Item not found' });
-                }
-                res.json(updatedItem);
-            })
-            .catch(err => res.status(400).json({ error: err.message }));
-    }catch (e) {
-        res.status(400).json({ error: e.message });
+    if (!tokenPayload || !tokenPayload.email) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid token payload." });
     }
-}
+
+    try {
+        // Find the item by itemId
+        const item = await Item.findById(itemId);
+
+        if (!item) {
+            return res.status(StatusCodes.NOT_FOUND).json({ error: 'Item not found' });
+        }
+
+        // Verify if the user is the owner of the item
+        if (item.ownerEmail !== tokenPayload.email) {
+            return res.status(StatusCodes.FORBIDDEN).json({ error: "You are not authorized to edit this item." });
+        }
+
+        // Update the item
+        const updatedItem = await Item.findByIdAndUpdate(itemId, req.body, { new: true });
+
+        if (!updatedItem) {
+            return res.status(StatusCodes.NOT_FOUND).json({ error: 'Item not found' });
+        }
+
+        res.json(updatedItem);
+    } catch (error) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: error.message });
+    }
+};
 
 
-exports.deleteItem=async (req,res)=>{
+exports.deleteItem = async (req, res) => {
     const itemId = req.params.itemId;
+    const token = getTokenFromRequest(req);
+    const tokenPayload = jwt.decode(token);
 
-    console.log("itemid"+itemId)
-
-    try{
-        Item.findOneAndDelete({ _id: itemId })
-            .then(item => {
-                if (!item) {
-                    return res.status(404).json({ error: 'Item not found' });
-                }
-                res.json({ message: 'Item removed successfully' , item});
-            })
-            .catch(err => res.status(400).json({ error: err.message }));
-    }catch (e) {
-        res.status(400).json({ error: e.message });
+    if (!tokenPayload || !tokenPayload.email) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid token payload." });
     }
-}
+
+    try {
+        // Find the item by itemId
+        const item = await Item.findById(itemId);
+
+        if (!item) {
+            return res.status(StatusCodes.NOT_FOUND).json({ error: 'Item not found' });
+        }
+
+        // Verify if the user is the owner of the item
+        if (item.ownerEmail !== tokenPayload.email) {
+            return res.status(StatusCodes.FORBIDDEN).json({ error: "You are not authorized to delete this item." });
+        }
+
+        // Delete the item
+        const deletedItem = await Item.findOneAndDelete({ _id: itemId });
+
+        if (!deletedItem) {
+            return res.status(StatusCodes.NOT_FOUND).json({ error: 'Item not found' });
+        }
+
+        res.json({ message: 'Item removed successfully', item: deletedItem });
+    } catch (error) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: error.message });
+    }
+};
