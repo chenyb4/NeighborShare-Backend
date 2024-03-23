@@ -13,7 +13,7 @@ router.get('/:apartmentId', apartmentController.getApartmentById);
 
 
 //create
-router.post('', apartmentController.addApartment);
+router.post('', isLoggedIn,apartmentController.addApartment);
 
 
 //update

@@ -4,6 +4,10 @@ const ApartmentSchema=mongoose.Schema({
     name:{
         type:String,
         required:true
+    },
+    PIN:{
+        type:String,
+        required:true
     }
 });
 

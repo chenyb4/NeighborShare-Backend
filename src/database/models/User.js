@@ -13,7 +13,7 @@ const UserSchema=mongoose.Schema({
         type:String,
         required:true
     },
-    apartment:{
+    apartment_id:{
         type:String,
         required:false
     },

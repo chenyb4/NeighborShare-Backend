@@ -1,5 +1,7 @@
 const Apartment = require("../database/models/Apartment");
-
+const User = require("../database/models/User");
+const jwt = require('jsonwebtoken');
+const {getTokenFromRequest} = require("./utils/helperFunctions");
 
 exports.getAllApartments=async (req, res) => {
     try {
@@ -29,19 +31,56 @@ exports.getApartmentById=async (req,res)=>{
 }
 
 
-exports.addApartment=async (req,res)=>{
-    const newApartment = new Apartment({
-        name: req.body.name
-    });
-
+exports.addApartment = async (req, res) => {
     try {
-        newApartment.save()
-            .then(apartment => res.json(apartment))
-            .catch(err => res.status(400).json({ error: err.message }));
-    }catch (e) {
-        res.status(400).json({ error: e.message });
+        // Check if name and PIN are provided
+        const { name, PIN } = req.body;
+        if (!name || !PIN) {
+            return res.status(400).json({ error: "Name and PIN are required." });
+        }
+
+        // Decode token payload to get user email
+        const token = getTokenFromRequest(req);
+        const tokenPayload = jwt.decode(token);
+        if (!tokenPayload || !tokenPayload.email) {
+            return res.status(400).json({ error: "Invalid token payload." });
+        }
+
+        // Find the user by email
+        const user = await User.findOne({ email: tokenPayload.email });
+        if (!user) {
+            return res.status(404).json({ error: "User not found." });
+        }
+
+        // Check if apartment name contains spaces
+        if (name.includes(" ")) {
+            return res.status(400).json({ error: "Apartment name cannot contain spaces." });
+        }
+
+        // Check if apartment name is already taken
+        const existingApartment = await Apartment.findOne({ name });
+        if (existingApartment) {
+            return res.status(400).json({ error: "Apartment name already exists." });
+        }
+
+        // Create new apartment
+        const newApartment = new Apartment({
+            name,
+            PIN
+        });
+
+        // Save apartment to database
+        const savedApartment = await newApartment.save();
+
+        // Update user's apartment_id
+        user.apartment_id = savedApartment._id;
+        await user.save();
+
+        res.json({ apartment: savedApartment, user });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-}
+};
 
 
 exports.editApartment=(req,res)=>{
