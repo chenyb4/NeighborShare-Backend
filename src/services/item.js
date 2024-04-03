@@ -59,9 +59,6 @@ exports.addItem = async (req, res) => {
 
         const tokenPayload = jwt.decode(token);
 
-        console.log(tokenPayload);
-        console.log(tokenPayload.apartment_id);
-
         if (!tokenPayload || !tokenPayload.email) {
             return res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid token payload." });
         }
@@ -84,7 +81,12 @@ exports.addItem = async (req, res) => {
         // Check if all required fields are provided
         const { name, description, apartmentNumber, isAvailable } = req.body;
         if (!name || !description || !apartmentNumber || !isAvailable) {
-            return res.status(400).json({ error: "All fields are required. name, description, apartmentNumber, isAvailable" });
+            return res.status(400).json({ error: "All fields are required: name, description, apartmentNumber, isAvailable" });
+        }
+
+        // Check if an image file was uploaded
+        if (!req.file) {
+            return res.status(400).json({ error: "No image file uploaded." });
         }
 
         // Create new item
@@ -93,7 +95,8 @@ exports.addItem = async (req, res) => {
             ownerEmail,
             description,
             apartmentNumber,
-            isAvailable
+            isAvailable,
+            imageData: req.file.buffer // Save image data to the item
         });
 
         // Save item to database

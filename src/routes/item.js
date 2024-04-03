@@ -5,6 +5,12 @@ const itemController=require("../controllers/item")
 
 const isLoggedIn = require('../middleware/is-logged-in');
 
+const multer = require('multer');
+
+// Multer configuration for handling image uploads
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
 
 //get all
 router.get('',isLoggedIn,itemController.getAllItems);
@@ -15,7 +21,7 @@ router.get('/:itemId',itemController.getItemById);
 
 
 //post
-router.post('',isLoggedIn,itemController.addItem);
+router.post('',isLoggedIn,upload.single('file'),itemController.addItem);
 
 
 
