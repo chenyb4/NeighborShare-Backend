@@ -3,6 +3,8 @@ const {getTokenFromRequest} = require("./utils/helperFunctions");
 const jwt = require('jsonwebtoken');
 const User = require("../database/models/User");
 
+const imagePlaceholder =require("../assets/constants");
+
 //get all the items in my apartment, not really all the items
 exports.getAllItems = async (req, res) => {
     try {
@@ -84,9 +86,12 @@ exports.addItem = async (req, res) => {
             return res.status(400).json({ error: "All fields are required: name, description, apartmentNumber, isAvailable" });
         }
 
-        // Check if an image file was uploaded
-        if (!req.file) {
-            return res.status(400).json({ error: "No image file uploaded." });
+        // Set default image if no image file was uploaded
+        let imageData;
+        if (req.file) {
+            imageData = req.file.buffer;
+        } else {
+            imageData = Buffer.from(imagePlaceholder.data, "base64");
         }
 
         // Create new item
@@ -96,7 +101,7 @@ exports.addItem = async (req, res) => {
             description,
             apartmentNumber,
             isAvailable,
-            imageData: req.file.buffer // Save image data to the item
+            imageData // Save image data to the item
         });
 
         // Save item to database
