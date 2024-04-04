@@ -1,4 +1,4 @@
-const {getAllItems, getItemById, addItem, editItem, deleteItem} = require("../services/item");
+const {getAllItems, getItemById, addItem, editItem, deleteItem, patchItem} = require("../services/item");
 
 exports.getAllItems=getAllItems;
 
@@ -9,3 +9,5 @@ exports.addItem=addItem;
 exports.editItem=editItem;
 
 exports.deleteItem=deleteItem;
+
+exports.patchItem=patchItem;

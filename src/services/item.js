@@ -181,3 +181,39 @@ exports.deleteItem = async (req, res) => {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: error.message });
     }
 };
+
+
+exports.patchItem = async (req, res) => {
+    const itemId = req.params.itemId;
+    const token = getTokenFromRequest(req);
+    const tokenPayload = jwt.decode(token);
+
+    if (!tokenPayload || !tokenPayload.email) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid token payload." });
+    }
+
+    try {
+        // Find the item by itemId
+        const item = await Item.findById(itemId);
+
+        if (!item) {
+            return res.status(StatusCodes.NOT_FOUND).json({ error: 'Item not found' });
+        }
+
+        // Verify if the user is the owner of the item
+        if (item.ownerEmail !== tokenPayload.email) {
+            return res.status(StatusCodes.FORBIDDEN).json({ error: "You are not authorized to edit this item." });
+        }
+
+        // Update the item with the patched data
+        const patchedItem = await Item.findByIdAndUpdate(itemId, req.body, { new: true });
+
+        if (!patchedItem) {
+            return res.status(StatusCodes.NOT_FOUND).json({ error: 'Item not found' });
+        }
+
+        res.json(patchedItem);
+    } catch (error) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: error.message });
+    }
+};

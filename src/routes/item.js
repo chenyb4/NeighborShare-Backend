@@ -26,11 +26,13 @@ router.post('',isLoggedIn,upload.single('file'),itemController.addItem);
 
 
 //update
-router.put('/:itemId',isLoggedIn,itemController.editItem);
+router.put('/:itemId',isLoggedIn,upload.single('file'),itemController.editItem);
 
 
 //delete
 router.delete('/:itemId', isLoggedIn,itemController.deleteItem);
+
+router.patch('/:itemId',isLoggedIn,upload.single('file'),itemController.patchItem);
 
 
 
