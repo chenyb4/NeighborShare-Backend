@@ -16,7 +16,7 @@ app.use('/items',require('./routes/item'));
 app.use('/users',require('./routes/user'));
 app.use('/credentials',require('./routes/credentials'));
 
-mongoose.connect('mongodb://localhost:27017').then(r => console.log('db connected'))
+mongoose.connect('mongodb://127.0.0.1:27017').then(r => console.log('db connected'))
 
 app.listen(port,()=>{
     console.log(`backend running on port ${port}`);
