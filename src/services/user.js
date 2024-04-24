@@ -39,24 +39,36 @@ exports.getUserById=async (req,res)=>{
     }
 }
 
-exports.addUser=async (req,res)=>{
-    const salt=bcrypt.genSaltSync(10);
+exports.addUser = async (req, res) => {
+    const { name, email, password } = req.body;
 
-    const newUser = new User({
-        name: req.body.name,
-        email: req.body.email,
-        passwordHash:bcrypt.hashSync(req.body.password, salt),
-        secret: uuidv4()
-    });
+    try {
+        // Check if the email already exists
+        const existingUser = await User.findOne({ email });
 
-    try{
+        if (existingUser) {
+            return res.status(400).json({ error: "Email already exists." });
+        }
+
+        // If the email doesn't exist, proceed to create a new user
+        const salt = bcrypt.genSaltSync(10);
+
+        const newUser = new User({
+            name,
+            email,
+            passwordHash: bcrypt.hashSync(password, salt),
+            secret: uuidv4()
+        });
+
+        // Save the new user to the database
         newUser.save()
             .then(user => res.status(201).json(user))
             .catch(err => res.status(400).json({ error: err.message }));
-    }catch (e) {
-        res.status(400).json({ error: e.message });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-}
+};
+
 
 exports.editUser=async (req,res)=>{
     const userId = req.params.userId;
