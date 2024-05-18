@@ -15,7 +15,8 @@ app.use('/apartments',require('./routes/apartment'));
 app.use('/items',require('./routes/item'));
 app.use('/users',require('./routes/user'));
 app.use('/credentials',require('./routes/credentials'));
-app.use('/complaints',require('./routes/complaint'))
+app.use('/complaints',require('./routes/complaint'));
+app.use('/reviews',require('./routes/review'));
 
 mongoose.connect('mongodb://localhost:27017/').then(r => console.log('db connected'))
 
