@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const User = require("../database/models/User");
 
 const imagePlaceholder =require("../assets/constants");
+const {startSession} = require("mongoose");
 
 //get all the items in my apartment, not really all the items
 exports.getAllItems = async (req, res) => {
@@ -55,60 +56,68 @@ exports.getItemById=async (req,res)=>{
 }
 
 exports.addItem = async (req, res) => {
+    const session = await startSession();
+
     try {
-        // Extract token from request
-        const token = getTokenFromRequest(req);
+        await session.withTransaction(async () => {
+            // Extract token from request
+            const token = getTokenFromRequest(req);
 
-        const tokenPayload = jwt.decode(token);
+            const tokenPayload = jwt.decode(token);
 
-        if (!tokenPayload || !tokenPayload.email) {
-            return res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid token payload." });
-        }
+            if (!tokenPayload || !tokenPayload.email) {
+                return res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid token payload." });
+            }
 
-        // Retrieve user by email from token payload
-        const user = await User.findOne({ email: tokenPayload.email });
+            // Retrieve user by email from token payload
+            const user = await User.findOne({ email: tokenPayload.email });
 
-        if (!user) {
-            return res.status(StatusCodes.NOT_FOUND).json({ error: "User not found." });
-        }
+            if (!user) {
+                return res.status(StatusCodes.NOT_FOUND).json({ error: "User not found." });
+            }
 
-        // Check if user has an apartment_id
-        if (!user.apartment_id) {
-            return res.status(403).json({ error: "Forbidden: User does not have an apartment." });
-        }
+            // Check if user has an apartment_id
+            if (!user.apartment_id) {
+                return res.status(403).json({ error: "Forbidden: User does not have an apartment." });
+            }
 
-        // Retrieve ownerEmail from token payload
-        const ownerEmail = tokenPayload.email;
+            // Retrieve ownerEmail from token payload
+            const ownerEmail = tokenPayload.email;
 
-        // Check if all required fields are provided
-        const { name, description, apartmentNumber, isAvailable } = req.body;
-        if (!name || !description || !apartmentNumber || !isAvailable) {
-            return res.status(400).json({ error: "All fields are required: name, description, apartmentNumber, isAvailable" });
-        }
+            // Check if all required fields are provided
+            const { name, description, apartmentNumber, isAvailable } = req.body;
+            if (!name || !description || !apartmentNumber || !isAvailable) {
+                return res.status(400).json({ error: "All fields are required: name, description, apartmentNumber, isAvailable" });
+            }
 
-        // Set default image if no image file was uploaded
-        let imageData;
-        if (req.file) {
-            imageData = req.file.buffer;
-        } else {
-            imageData = Buffer.from(imagePlaceholder.data, "base64");
-        }
+            // Set default image if no image file was uploaded
+            let imageData;
+            if (req.file) {
+                imageData = req.file.buffer;
+            } else {
+                imageData = Buffer.from(imagePlaceholder.data, "base64");
+            }
 
-        // Create new item
-        const newItem = new Item({
-            name,
-            ownerEmail,
-            description,
-            apartmentNumber,
-            isAvailable,
-            imageData // Save image data to the item
+            // Create new item
+            const newItem = new Item({
+                name,
+                ownerEmail,
+                description,
+                apartmentNumber,
+                isAvailable,
+                imageData // Save image data to the item
+            });
+
+            // Save item to database within the session
+            const savedItem = await newItem.save({ session });
+
+            res.json(savedItem);
         });
 
-        // Save item to database
-        const savedItem = await newItem.save();
-
-        res.json(savedItem);
+        session.endSession();
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         res.status(500).json({ error: error.message });
     }
 };
@@ -125,28 +134,36 @@ exports.editItem = async (req, res) => {
         return res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid token payload." });
     }
 
+    const session = await startSession();
+
     try {
-        // Find the item by itemId
-        const item = await Item.findById(itemId);
+        await session.withTransaction(async () => {
+            // Find the item by itemId within the session
+            const item = await Item.findById(itemId).session(session);
 
-        if (!item) {
-            return res.status(StatusCodes.NOT_FOUND).json({ error: 'Item not found' });
-        }
+            if (!item) {
+                return res.status(StatusCodes.NOT_FOUND).json({ error: 'Item not found' });
+            }
 
-        // Verify if the user is the owner of the item
-        if (item.ownerEmail !== tokenPayload.email) {
-            return res.status(StatusCodes.FORBIDDEN).json({ error: "You are not authorized to edit this item." });
-        }
+            // Verify if the user is the owner of the item
+            if (item.ownerEmail !== tokenPayload.email) {
+                return res.status(StatusCodes.FORBIDDEN).json({ error: "You are not authorized to edit this item." });
+            }
 
-        // Update the item
-        const updatedItem = await Item.findByIdAndUpdate(itemId, req.body, { new: true });
+            // Update the item within the session
+            const updatedItem = await Item.findByIdAndUpdate(itemId, req.body, { new: true }).session(session);
 
-        if (!updatedItem) {
-            return res.status(StatusCodes.NOT_FOUND).json({ error: 'Item not found' });
-        }
+            if (!updatedItem) {
+                return res.status(StatusCodes.NOT_FOUND).json({ error: 'Item not found' });
+            }
 
-        res.json(updatedItem);
+            res.json(updatedItem);
+        });
+
+        session.endSession();
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: error.message });
     }
 };
@@ -161,28 +178,36 @@ exports.deleteItem = async (req, res) => {
         return res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid token payload." });
     }
 
+    const session = await startSession();
+
     try {
-        // Find the item by itemId
-        const item = await Item.findById(itemId);
+        await session.withTransaction(async () => {
+            // Find the item by itemId within the session
+            const item = await Item.findById(itemId).session(session);
 
-        if (!item) {
-            return res.status(StatusCodes.NOT_FOUND).json({ error: 'Item not found' });
-        }
+            if (!item) {
+                return res.status(StatusCodes.NOT_FOUND).json({ error: 'Item not found' });
+            }
 
-        // Verify if the user is the owner of the item
-        if (item.ownerEmail !== tokenPayload.email) {
-            return res.status(StatusCodes.FORBIDDEN).json({ error: "You are not authorized to delete this item." });
-        }
+            // Verify if the user is the owner of the item
+            if (item.ownerEmail !== tokenPayload.email) {
+                return res.status(StatusCodes.FORBIDDEN).json({ error: "You are not authorized to delete this item." });
+            }
 
-        // Delete the item
-        const deletedItem = await Item.findOneAndDelete({ _id: itemId });
+            // Delete the item within the session
+            const deletedItem = await Item.findOneAndDelete({ _id: itemId }).session(session);
 
-        if (!deletedItem) {
-            return res.status(StatusCodes.NOT_FOUND).json({ error: 'Item not found' });
-        }
+            if (!deletedItem) {
+                return res.status(StatusCodes.NOT_FOUND).json({ error: 'Item not found' });
+            }
 
-        res.json({ message: 'Item removed successfully', item: deletedItem });
+            res.json({ message: 'Item removed successfully', item: deletedItem });
+        });
+
+        session.endSession();
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: error.message });
     }
 };
@@ -197,28 +222,36 @@ exports.patchItem = async (req, res) => {
         return res.status(StatusCodes.UNAUTHORIZED).json({ error: "Invalid token payload." });
     }
 
+    const session = await startSession();
+
     try {
-        // Find the item by itemId
-        const item = await Item.findById(itemId);
+        await session.withTransaction(async () => {
+            // Find the item by itemId within the session
+            const item = await Item.findById(itemId).session(session);
 
-        if (!item) {
-            return res.status(StatusCodes.NOT_FOUND).json({ error: 'Item not found' });
-        }
+            if (!item) {
+                return res.status(StatusCodes.NOT_FOUND).json({ error: 'Item not found' });
+            }
 
-        // Verify if the user is the owner of the item
-        if (item.ownerEmail !== tokenPayload.email) {
-            return res.status(StatusCodes.FORBIDDEN).json({ error: "You are not authorized to edit this item." });
-        }
+            // Verify if the user is the owner of the item
+            if (item.ownerEmail !== tokenPayload.email) {
+                return res.status(StatusCodes.FORBIDDEN).json({ error: "You are not authorized to edit this item." });
+            }
 
-        // Update the item with the patched data
-        const patchedItem = await Item.findByIdAndUpdate(itemId, req.body, { new: true });
+            // Update the item with the patched data within the session
+            const patchedItem = await Item.findByIdAndUpdate(itemId, req.body, { new: true }).session(session);
 
-        if (!patchedItem) {
-            return res.status(StatusCodes.NOT_FOUND).json({ error: 'Item not found' });
-        }
+            if (!patchedItem) {
+                return res.status(StatusCodes.NOT_FOUND).json({ error: 'Item not found' });
+            }
 
-        res.json(patchedItem);
+            res.json(patchedItem);
+        });
+
+        session.endSession();
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: error.message });
     }
 };
