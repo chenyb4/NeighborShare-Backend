@@ -18,7 +18,7 @@ app.use('/credentials',require('./routes/credentials'));
 app.use('/complaints',require('./routes/complaint'));
 app.use('/reviews',require('./routes/review'));
 
-mongoose.connect('mongodb://localhost:27017/').then(r => console.log('db connected'))
+mongoose.connect('mongodb+srv://chenyb0417:Cye6TMRkwprymkgf@clusterfree.16xubwf.mongodb.net/?retryWrites=true&w=majority&appName=ClusterFree').then(r => console.log('db connected'))
 
 app.listen(port,()=>{
     console.log(`backend running on port ${port}`);

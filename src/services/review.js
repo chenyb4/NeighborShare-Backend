@@ -1,7 +1,11 @@
+
+const { StatusCodes } = require("http-status-codes");
 const Review = require("../database/models/Review");
 const User = require("../database/models/User");
 const jwt = require('jsonwebtoken');
 const {getTokenFromRequest} = require("./utils/helperFunctions");
+const mongoose = require("mongoose");
+
 
 exports.getAllReviews=async (req, res) => {
     try {
@@ -32,15 +36,24 @@ exports.getReviewById=async (req,res)=>{
 
 
 exports.addReview = async (req, res) => {
+    // Extract required fields from request body
+    const { for_user_id, content } = req.body;
+
+    // Validate the required fields
+    if (!for_user_id || !content) {
+        return res.status(400).json({ error: "for_user_id and content are required." });
+    }
+
+    const session=await mongoose.startSession();
+
+    const transactionOptions = {
+        readPreference: 'primary',
+        readConcern: { level: 'local' },
+        writeConcern: { w: 'majority' }
+    };
+
+
     try {
-        // Extract required fields from request body
-        const { for_user_id, content } = req.body;
-
-        // Validate the required fields
-        if (!for_user_id || !content) {
-            return res.status(400).json({ error: "for_user_id and content are required." });
-        }
-
         // Extract token from request
         const token = getTokenFromRequest(req);
         const tokenPayload = jwt.decode(token);
@@ -64,9 +77,14 @@ exports.addReview = async (req, res) => {
         });
 
         // Save review to database
-        const savedReview = await newReview.save();
+        const transactionResults=await session.withTransaction(async ()=>{
+            await newReview.save({session});
+            res
+                .status(StatusCodes.CREATED)
+                .send(newReview);
 
-        res.status(201).json({ review: savedReview });
+        },transactionOptions)
+
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -75,51 +93,78 @@ exports.addReview = async (req, res) => {
 
 exports.editReview = async (req, res) => {
     const reviewId = req.params.reviewId;
+    const { content } = req.body;
 
     try {
-        // Extract only the content field from the request body
-        const { content } = req.body;
-
         // Check if content is provided
         if (!content) {
             return res.status(400).json({ error: 'Content is required to update the review.' });
         }
 
-        // Update the review's content
-        const updatedReview = await Review.findByIdAndUpdate(
-            reviewId,
-            { content },
-            { new: true }
-        );
+        // Start a session
+        const session = await mongoose.startSession();
 
-        // Check if the review was found and updated
-        if (!updatedReview) {
-            return res.status(404).json({ error: 'Review not found' });
+        try {
+            // Begin a transaction
+            await session.startTransaction();
+
+            // Update the review's content within the transaction
+            const updatedReview = await Review.findByIdAndUpdate(
+                reviewId,
+                { content },
+                { new: true, session }
+            );
+
+            // Check if the review was found and updated
+            if (!updatedReview) {
+                await session.abortTransaction();
+                session.endSession();
+                return res.status(404).json({ error: 'Review not found' });
+            }
+
+            // Commit the transaction
+            await session.commitTransaction();
+            session.endSession();
+
+            // Send the updated review as a response
+            res.json(updatedReview);
+        } catch (error) {
+            // If an error occurs, abort the transaction
+            await session.abortTransaction();
+            session.endSession();
+            // Handle the error
+            throw error; // Propagate the error to the outer catch block
         }
-
-        res.json(updatedReview);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
 
 
-exports.deleteReview=(req,res)=>{
+exports.deleteReview = async (req, res) => {
     const reviewId = req.params.reviewId;
 
-    try{
-        Review.findOneAndDelete(reviewId)
-            .then(review => {
-                if (!review) {
-                    return res.status(404).json({ error: 'Review not found' });
-                }
-                res.json({ message: 'Review removed successfully' });
-            })
-            .catch(err => res.status(400).json({ error: err.message }));
-    }catch (e) {
-        res.status(400).json({ error: e.message });
+    const session = await mongoose.startSession();
+
+    try {
+        await session.withTransaction(async () => {
+            const review = await Review.findByIdAndDelete(reviewId).session(session);
+
+            if (!review) {
+                return res.status(404).json({ error: 'Review not found' });
+            }
+
+            res.json({ message: 'Review removed successfully' });
+        });
+
+        session.endSession();
+    } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+        res.status(500).json({ error: error.message });
     }
-}
+};
+
 
 
 
