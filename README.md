@@ -64,3 +64,36 @@ docker-compose up
 ```
 >Note: If the docker containers cannot be started properly, please delete your ```node_modules``` directory and your ```package-lock.json``` file.
 
+
+## Example Credentials
+
+--- 
+
+### Creating a user
+When the application is properly running, use e.g. Postman to do a ```POST``` call to ```localhost:3000/users```, with a request body like this example:
+
+```
+{
+    "name":"John Doe",
+    "email":"sample-email@gmail.com",
+    "password":"sample-password"
+}
+```
+
+Then a user is created. 
+
+### Logging in
+
+To log in, do a ```POST``` call to ```localhost:3000/credentials``` with the email and password of the user you just created in the request body as the example below:
+
+```
+{
+    "email":"sample-email@gmail.com",
+    "password":"sample-password"
+}
+```
+
+You will then receive a JWT in the response. You can then include the JWT you receive in the authorization header of other calls to authorize. 
+
+
+
