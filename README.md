@@ -1,4 +1,4 @@
-# NeighborShare Backend
+# NeighborShare Backend Prototype
 
 The project will build a NodeJS application with JavaScript. Node and Express are used in the backend with JavaScript. MongoDB is used as the database to persist data.
 
