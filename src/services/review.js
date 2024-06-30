@@ -6,12 +6,14 @@ const jwt = require('jsonwebtoken');
 const {getTokenFromRequest} = require("./utils/helperFunctions");
 const mongoose = require("mongoose");
 
+const logger=require("../utils/logger")
 
 exports.getAllReviews=async (req, res) => {
     try {
         const reviews = await Review.find();
         res.json(reviews);
     } catch (e) {
+        logger.error(e.message);
         res.status(400).json({error: e.message});
     }
 }
@@ -30,6 +32,7 @@ exports.getReviewById=async (req,res)=>{
             })
             .catch(err => res.status(400).json({ error: err.message }));
     }catch (e) {
+        logger.error(e.message);
         res.status(400).json({ error: e.message });
     }
 }
@@ -86,6 +89,7 @@ exports.addReview = async (req, res) => {
         },transactionOptions)
 
     } catch (error) {
+        logger.error(error.message);
         res.status(500).json({ error: error.message });
     }
 };
@@ -129,6 +133,7 @@ exports.editReview = async (req, res) => {
             // Send the updated review as a response
             res.json(updatedReview);
         } catch (error) {
+            logger.error(error.message);
             // If an error occurs, abort the transaction
             await session.abortTransaction();
             session.endSession();
@@ -136,6 +141,7 @@ exports.editReview = async (req, res) => {
             throw error; // Propagate the error to the outer catch block
         }
     } catch (error) {
+        logger.error(error.message);
         res.status(500).json({ error: error.message });
     }
 };
@@ -159,6 +165,7 @@ exports.deleteReview = async (req, res) => {
 
         session.endSession();
     } catch (error) {
+        logger.error(error.message);
         await session.abortTransaction();
         session.endSession();
         res.status(500).json({ error: error.message });

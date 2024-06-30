@@ -7,7 +7,7 @@ const logger=require("../utils/logger")
 
 
 exports.getAllUsers = async (req, res) => {
-    logger.error("sample error at level error");
+    logger.error("another sample error");
     try {
         let query = {};
 
@@ -19,6 +19,7 @@ exports.getAllUsers = async (req, res) => {
         const users = await User.find(query);
         res.json(users);
     } catch (err) {
+        logger.error(err.message);
         res.status(500).json({ message: err.message });
     }
 };
@@ -39,6 +40,7 @@ exports.getUserById=async (req,res)=>{
             })
             .catch(err => res.status(400).json({ error: err.message }));
     }catch (e) {
+        logger.error(e.message);
         res.status(400).json({ error: e.message });
     }
 }
@@ -72,6 +74,7 @@ exports.addUser = async (req, res) => {
             res.status(201).json(newUser);
         });
     } catch (error) {
+        logger.error(error.message);
         res.status(500).json({ error: error.message });
     } finally {
         session.endSession();
@@ -95,6 +98,7 @@ exports.editUser = async (req, res) => {
             res.json(updatedUser);
         });
     } catch (error) {
+        logger.error(error.message);
         res.status(500).json({ error: error.message });
     } finally {
         session.endSession();
@@ -119,6 +123,7 @@ exports.deleteUser = async (req, res) => {
             res.json({ message: 'User removed successfully' });
         });
     } catch (error) {
+        logger.error(error.message);
         res.status(500).json({ error: error.message });
     } finally {
         session.endSession();

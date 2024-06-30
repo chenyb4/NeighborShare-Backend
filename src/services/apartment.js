@@ -4,11 +4,14 @@ const jwt = require('jsonwebtoken');
 const {getTokenFromRequest} = require("./utils/helperFunctions");
 const {startSession} = require("mongoose");
 
+const logger=require("../utils/logger")
+
 exports.getAllApartments=async (req, res) => {
     try {
         const apartments = await Apartment.find();
         res.json(apartments);
     } catch (e) {
+        logger.error(e.message);
         res.status(400).json({error: e.message});
     }
 }
@@ -27,6 +30,7 @@ exports.getApartmentById=async (req,res)=>{
             })
             .catch(err => res.status(400).json({ error: err.message }));
     }catch (e) {
+        logger.error(e.message);
         res.status(400).json({ error: e.message });
     }
 }
@@ -83,6 +87,7 @@ exports.addApartment = async (req, res) => {
             res.json({ apartment: savedApartment, user });
         });
     } catch (error) {
+        logger.error(error.message);
         res.status(500).json({ error: error.message });
     } finally {
         session.endSession();
@@ -105,6 +110,7 @@ exports.editApartment = async (req, res) => {
             res.json(updatedApartment);
         });
     } catch (error) {
+        logger.error(error.message);
         res.status(500).json({ error: error.message });
     } finally {
         session.endSession();
@@ -126,6 +132,7 @@ exports.deleteApartment = async (req, res) => {
             res.json({ message: 'Apartment removed successfully' });
         });
     } catch (error) {
+        logger.error(error.message);
         res.status(500).json({ error: error.message });
     } finally {
         session.endSession();

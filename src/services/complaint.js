@@ -4,12 +4,14 @@ const User = require("../database/models/User");
 const {getTokenFromRequest} = require("./utils/helperFunctions");
 const {startSession} = require("mongoose");
 
+const logger=require("../utils/logger")
 
 exports.getAllComplaints=async (req, res) => {
     try {
         const complaints = await Complaint.find();
         res.json(complaints);
     } catch (e) {
+        logger.error(e.message);
         res.status(400).json({error: e.message});
     }
 }
@@ -28,6 +30,7 @@ exports.getComplaintById=async (req,res)=>{
             })
             .catch(err => res.status(400).json({ error: err.message }));
     }catch (e) {
+        logger.error(e.message);
         res.status(400).json({ error: e.message });
     }
 }
@@ -78,6 +81,7 @@ exports.addComplaint = async (req, res) => {
             res.status(201).json({ complaint: savedComplaint });
         });
     } catch (error) {
+        logger.error(error.message);
         res.status(500).json({ error: error.message });
     } finally {
         session.endSession();
@@ -114,6 +118,7 @@ exports.editComplaint = async (req, res) => {
             res.json(updatedComplaint);
         });
     } catch (error) {
+        logger.error(error.message);
         res.status(400).json({ error: error.message });
     } finally {
         session.endSession();
@@ -140,6 +145,7 @@ exports.deleteComplaint = async (req, res) => {
             res.json({ message: 'Complaint removed successfully' });
         });
     } catch (error) {
+        logger.error(error.message);
         res.status(400).json({ error: error.message });
     } finally {
         session.endSession();

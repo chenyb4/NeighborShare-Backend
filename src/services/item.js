@@ -6,6 +6,8 @@ const User = require("../database/models/User");
 const imagePlaceholder =require("../assets/constants");
 const {startSession} = require("mongoose");
 
+const logger=require("../utils/logger")
+
 //get all the items in my apartment, not really all the items
 exports.getAllItems = async (req, res) => {
     try {
@@ -37,6 +39,7 @@ exports.getAllItems = async (req, res) => {
 
         res.json(items);
     } catch (error) {
+        logger.error(error.message);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: error.message });
     }
 };
@@ -116,6 +119,7 @@ exports.addItem = async (req, res) => {
 
         session.endSession();
     } catch (error) {
+        logger.error(error.message);
         await session.abortTransaction();
         session.endSession();
         res.status(500).json({ error: error.message });
@@ -162,6 +166,7 @@ exports.editItem = async (req, res) => {
 
         session.endSession();
     } catch (error) {
+        logger.error(error.message);
         await session.abortTransaction();
         session.endSession();
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: error.message });
@@ -206,6 +211,7 @@ exports.deleteItem = async (req, res) => {
 
         session.endSession();
     } catch (error) {
+        logger.error(error.message);
         await session.abortTransaction();
         session.endSession();
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: error.message });
@@ -250,6 +256,7 @@ exports.patchItem = async (req, res) => {
 
         session.endSession();
     } catch (error) {
+        logger.error(error.message);
         await session.abortTransaction();
         session.endSession();
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: error.message });
