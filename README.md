@@ -95,5 +95,16 @@ To log in, do a ```POST``` call to ```localhost:3000/credentials``` with the ema
 
 You will then receive a JWT in the response. You can then include the JWT you receive in the authorization header of other calls to authorize. 
 
+### Database credentials
+
+I have already set up a MongoDB Atlas cluster that can be used for testing the application. 
+The connection sting is:
+
+```
+mongodb+srv://chenyb0417:Cye6TMRkwprymkgf@clusterfree.16xubwf.mongodb.net/?retryWrites=true&w=majority&appName=ClusterFree
+```
+
+Copy and past this connection string to the ```.env``` file in the root directory to set up the database connection to this application. 
+
 
 
