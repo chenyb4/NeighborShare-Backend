@@ -3,8 +3,11 @@ const bcrypt = require("bcrypt");
 const {v4: uuidv4} = require("uuid");
 const {startSession} = require("mongoose");
 
+const logger=require("../utils/logger")
+
 
 exports.getAllUsers = async (req, res) => {
+    logger.error("sample error at level error");
     try {
         let query = {};
 
